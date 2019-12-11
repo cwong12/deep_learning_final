@@ -28,7 +28,7 @@ class PGM(tf.keras.Model):
 
         # Define actor network parameters, critic network parameters, and optimizer
 
-        self.hidden_size = 30
+        self.hidden_size = 60
 
         self.actor1 = tf.keras.layers.Dense(self.hidden_size)
         self.actor2 = tf.keras.layers.Dense(self.num_actions)
@@ -68,7 +68,6 @@ class PGM(tf.keras.Model):
         of an episode
         :return: A [episode_length] matrix representing the value of each state
         """
-        # implement this :D
 
         critic1out = self.critic1(states)
         relout = tf.nn.relu(critic1out)
@@ -117,6 +116,6 @@ class PGM(tf.keras.Model):
 
         loss_critic = tf.math.reduce_sum(   tf.math.square(tf.cast((discounted_rewards-values),tf.float32))    )
         actor_weight=1
-        critic_weight=1
+        critic_weight=0.5
         
         return actor_weight*loss_actor + critic_weight*loss_critic

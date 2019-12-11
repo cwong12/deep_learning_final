@@ -28,7 +28,7 @@ from gfootball.env import config
 from gfootball.env import football_env
 from gfootball.env import football_action_set
 from gfootball.env import wrappers
-from gfootball import pgmmodel
+import pgmmodel
 
 import tensorflow as tf
 import numpy as np
@@ -43,7 +43,7 @@ flags.DEFINE_enum('action_set', 'full', ['default', 'full'], 'Action set')
 flags.DEFINE_bool('real_time', True,
                   'If true, environment will slow down so humans can play.')
 
-def discount(rewards, discount_factor=.999):
+def discount(rewards, discount_factor=.9):
     """
     Takes in a list of rewards for each timestep in an episode, 
     and returns a list of the sum of discounted rewards for
@@ -79,10 +79,10 @@ def generate_trajectory(env, model):
     actions = []
     rewards = []
     observation = env.reset()
+    ball_position = observation[0].get('ball')
+    old_ball_x = ball_position[0]
+    old_ball_y = ball_position[1]
     done = False
-    steps = 1
-    step_reward = 0
-    steps_remaining = 400
     while not done:
         
         # use model to generate probability distribution over next actions
@@ -100,15 +100,19 @@ def generate_trajectory(env, model):
         actions.append(action)
         observation, reward, done, _ = env.step(action)
         ball_position = observation[0].get('ball')
+        #print(ball_position)
         ball_x = ball_position[0]
         ball_y = ball_position[1]
-        steps_remaining = steps_remaining - 1
-	
-        step_reward = 1 - (1-ball_x) - abs(0-ball_y)
+        
+        step_reward = -1
+        if ((1-ball_x)**2+(0-ball_y)**2) < ((1-old_ball_x)**2+(0-old_ball_y)**2):
+           step_reward = 1
         if reward == 1:
-           step_reward = steps_remaining
+           step_reward = 300
            print("\nGOAL!!\n")
         rewards.append(step_reward)
+        old_ball_x = ball_x
+        old_ball_y = ball_y
 
     return observations, actions, rewards
 
@@ -122,7 +126,7 @@ def train(env, model):
         discount_rewards = discount(tf.convert_to_tensor(rewards))
         # Compute the loss from the model and run backpropagation on the model.
         loss = model.loss(tf.convert_to_tensor(states), tf.convert_to_tensor(actions), discount_rewards)
-        print(loss)
+        print("Loss: ",loss.numpy())
 
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
@@ -143,7 +147,6 @@ def main(_):
   #env.render()
 
   actions = football_action_set.get_action_set(cfg)
-  print(actions)
 
   state_size = 115
   num_actions = 9
@@ -154,7 +157,7 @@ def main(_):
 
     for i in range(episodes):
         reward = train(env,model)
-        print("TotalReward: ", reward)
+        print("Episode Reward: ", reward)
 
   except KeyboardInterrupt:
     logging.warning('Game stopped, writing dump...')
