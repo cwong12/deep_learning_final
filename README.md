@@ -66,19 +66,10 @@ In order to run TF training, install additional dependencies:
   `pip3 install git+https://github.com/openai/baselines.git@master`.
 
 Then:
+These two files contain our model and training process.
 
-- To run example PPO experiment on `academy_empty_goal` scenario, run
-  `python3 -m gfootball.examples.run_ppo2 --level=academy_empty_goal_close`
-- To run on `academy_pass_and_shoot_with_keeper` scenario, run
-  `python3 -m gfootball.examples.run_ppo2 --level=academy_pass_and_shoot_with_keeper`
-
-In order to train with nice replays being saved, run
-`python3 -m gfootball.examples.run_ppo2 --dump_full_episodes=True --render=True`
-
-In order to reproduce PPO results from the paper, please refer to:
-
-- gfootball/examples/repro_checkpoint_easy.sh
-- gfootball/examples/repro_scoring_easy.sh
+- gfootball/pgmmodel.py
+- gffotball/train.py
 
 ## Playing the game
 
